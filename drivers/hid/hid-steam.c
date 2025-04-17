@@ -1123,6 +1123,9 @@ static int steam_probe(struct hid_device *hdev,
 	INIT_LIST_HEAD(&steam->list);
 	INIT_WORK(&steam->rumble_work, steam_haptic_rumble_cb);
 
+    /* Force the gamepad_mode on for Steam Deck */
+	steam->gamepad_mode = true;
+
 	/*
 	 * With the real steam controller interface, do not connect hidraw.
 	 * Instead, create the client_hid and connect that.
