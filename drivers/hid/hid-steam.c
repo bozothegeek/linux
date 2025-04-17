@@ -48,7 +48,7 @@
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Rodrigo Rivas Costa <rodrigorivascosta@gmail.com>");
 
-static bool lizard_mode = true;
+static bool lizard_mode = false;
 
 static DEFINE_MUTEX(steam_devices_lock);
 static LIST_HEAD(steam_devices);
