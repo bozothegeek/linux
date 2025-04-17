@@ -48,7 +48,7 @@
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Rodrigo Rivas Costa <rodrigorivascosta@gmail.com>");
 
-static bool lizard_mode = true;
+static bool lizard_mode = false;
 
 static DEFINE_MUTEX(steam_devices_lock);
 static LIST_HEAD(steam_devices);
@@ -1122,6 +1122,9 @@ static int steam_probe(struct hid_device *hdev,
 	INIT_DELAYED_WORK(&steam->mode_switch, steam_mode_switch_cb);
 	INIT_LIST_HEAD(&steam->list);
 	INIT_WORK(&steam->rumble_work, steam_haptic_rumble_cb);
+
+    /* Force the gamepad_mode on for Steam Deck */
+	steam->gamepad_mode = true;
 
 	/*
 	 * With the real steam controller interface, do not connect hidraw.
