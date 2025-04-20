@@ -48,7 +48,9 @@
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Rodrigo Rivas Costa <rodrigorivascosta@gmail.com>");
 
-static bool lizard_mode = true;
+static bool lizard_mode = false;
+static int input_device_mode = 0; //0 = default behavior (existing input device will be removed when any HID client is detected)
+								  //1 = existing input device will be kept when any HID client is detected
 
 static DEFINE_MUTEX(steam_devices_lock);
 static LIST_HEAD(steam_devices);
@@ -1003,33 +1005,36 @@ static void steam_client_ll_stop(struct hid_device *hdev)
 
 static int steam_client_ll_open(struct hid_device *hdev)
 {
-	struct steam_device *steam = hdev->driver_data;
-	unsigned long flags;
+	if(input_device_mode == 0){
+		struct steam_device *steam = hdev->driver_data;
+		unsigned long flags;
 
-	spin_lock_irqsave(&steam->lock, flags);
-	steam->client_opened++;
-	spin_unlock_irqrestore(&steam->lock, flags);
+		spin_lock_irqsave(&steam->lock, flags);
+		steam->client_opened++;
+		spin_unlock_irqrestore(&steam->lock, flags);
 
-	steam_input_unregister(steam);
-
+		steam_input_unregister(steam);
+	}
 	return 0;
 }
 
 static void steam_client_ll_close(struct hid_device *hdev)
 {
-	struct steam_device *steam = hdev->driver_data;
+	if(input_device_mode == 0){
+		struct steam_device *steam = hdev->driver_data;
 
-	unsigned long flags;
-	bool connected;
+		unsigned long flags;
+		bool connected;
 
-	spin_lock_irqsave(&steam->lock, flags);
-	steam->client_opened--;
-	connected = steam->connected && !steam->client_opened;
-	spin_unlock_irqrestore(&steam->lock, flags);
+		spin_lock_irqsave(&steam->lock, flags);
+		steam->client_opened--;
+		connected = steam->connected && !steam->client_opened;
+		spin_unlock_irqrestore(&steam->lock, flags);
 
-	if (connected) {
-		steam_set_lizard_mode(steam, lizard_mode);
-		steam_input_register(steam);
+		if (connected) {
+			steam_set_lizard_mode(steam, lizard_mode);
+			steam_input_register(steam);
+		}
 	}
 }
 
@@ -1694,6 +1699,10 @@ static const struct kernel_param_ops steam_lizard_mode_ops = {
 module_param_cb(lizard_mode, &steam_lizard_mode_ops, &lizard_mode, 0644);
 MODULE_PARM_DESC(lizard_mode,
 	"Enable mouse and keyboard emulation (lizard mode) when the gamepad is not in use");
+
+module_param(input_device_mode, int, 0644);
+MODULE_PARM_DESC(input_device_mode,
+	"Manage input device mode");
 
 static const struct hid_device_id steam_controllers[] = {
 	{ /* Wired Steam Controller */
